@@ -1,6 +1,6 @@
 // See https://github.com/hraftery/prism-chamfer
-include <prism-chamfer.scad>
 include <ScrewLibrary.scad>
+include <Charm.scad>
 
 // user customizable
 length=30; // 200;
@@ -8,16 +8,25 @@ length=30; // 200;
 drill_hole_distance= 45; // 0 for no drilled holes
 extra_thickness = 1.9; // Extra slider height for mounting
 extra_clearance = 0; // adjust if the build too loose or tight, positive for more clearance
-L_bracket_length = 75;
-front_style = "dovetail"; // "screwprofile"; // "round";
-back_style="dovetail";
 
-// Try not to touch below
+// front_style = "dovetail";
+front_style = "screwprofile";
+// front_style = "round";
+
+// back_style="dovetail";
+// back_style="bracket";
+back_style="charm"; // enabling charm may require printing supports
+
+bracket_length=50; // 100;
+screw_style=US5FlatStr; // going to do 3 types of screws
+
+// Probably going to change below as I add more features
 create_round_front = front_style == "round";
 create_dovetail_front = front_style == "dovetail";
 create_dovetail_back = back_style == "dovetail";
 create_bracket_back = back_style == "bracket";
 create_screwprofile_front = front_style == "screwprofile";
+create_charm_back = back_style == "charm";
 
 // t30 design parameters
 t30_bottom_thickness = 4;
@@ -42,8 +51,8 @@ top_start_x = (bottom_width - top_width) / 2;
 top_end_x = top_start_x + top_width;
 
 total_thickness = bottom_thickness + t30_top_thickness + extra_thickness;
-
-function calc_screw_hole_depth() = total_thickness - US5FlatHeadHeight - 2;
+    
+function calc_screw_hole_depth() = total_thickness - ScrewHeadHeight(screw_style) - 2; // the extra 2mm provides some strength to support the screw
     
 module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
 {
@@ -82,7 +91,7 @@ module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
             if (num_of_holes % 2 == 0) {num_of_holes = num_of_holes - 1;}
 
             num_of_holes_one_side = floor(num_of_holes / 2);
-            h1 = 15.875;
+            h1 = 15; // screw length, this will be deep enough
             h2 = total_thickness;
 
             // translate all holes to middle of slider and desired depth
@@ -98,16 +107,16 @@ module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
                 
                     // centre hole
                     translate([0, 0, midpoint]) rotate([-90, 0, 0]) 
-                        US5WoodScrew(h1,h2);
+                        CreateScrew(screw_style,h1,h2);
 
                     // rest of the holes are offset to the centre hole
                     for(i=[1:num_of_holes_one_side]){
                         pos = i * drill_hole_distance;
                         if (midpoint + pos < slider_length - 10) {
                             translate([0, 0, midpoint - pos]) rotate([-90, 0, 0])
-                                US5WoodScrew(h1,h2); 
+                                CreateScrew(screw_style,h1,h2); 
                             translate([0, 0, midpoint + pos]) rotate([-90, 0, 0])
-                                US5WoodScrew(h1,h2);
+                                CreateScrew(screw_style,h1,h2);
                         } // end if
                     } // end for
                 } // end union of drilled points     
@@ -161,17 +170,6 @@ module CreateDoveTail(clearance=0){
     } // end difference
 }
 
-/*
-module CreateDoveTailCutter(){
-    cutter_profile=[[-10,0],[10,0],[10,5],[-10,5]];
-    difference(){
-        linear_extrude(top_thickness)
-            polygon(cutter_profile);
-        CreateDoveTail();
-    }
-}
-*/
-
 // Main
 // Create the main slider, round the front if needed, create L bracket if needed
 
@@ -199,7 +197,7 @@ difference(){
         
         translate([bottom_width / 2, screw_hole_depth, 0])
         translate([0, 0, midpoint]) rotate([-90, 0, 0]) 
-            US5WoodScrew(h1,h2);
+            CreateScrew(screw_style,h1,h2);
     };
 }
 
@@ -210,6 +208,14 @@ if (create_dovetail_back) {
         rotate([-90,0,0])
         CreateDoveTail(0); 
 };  
+if (create_bracket_back) {
+    // TODO
+}
+if (create_charm_back) {
+    color("tomato")
+    translate([bottom_width/2,total_thickness/2,length])
+    CreateCharm();
+}
 } // end union    
 
 

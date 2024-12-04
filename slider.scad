@@ -1,24 +1,42 @@
-// See https://github.com/hraftery/prism-chamfer
 include <ScrewLibrary.scad>
 include <Charm.scad>
 
 // user customizable
-length=30; // 200;
+/* [General] */
 
-drill_hole_distance= 45; // 0 for no drilled holes
-extra_thickness = 1.9; // Extra slider height for mounting
-extra_clearance = 0; // adjust if the build too loose or tight, positive for more clearance
+Slider_Length=30; // 200;
 
-// front_style = "dovetail";
-front_style = "screwprofile";
-// front_style = "round";
+// Less than 20 will disable holes
+Drill_Hole_Distance=45; 
 
-// back_style="dovetail";
-// back_style="bracket";
-back_style="charm"; // enabling charm may require printing supports
+Screw_Style="US#5 Flat"; // ["US#5 Flat","US#6 Round","US#8 Flat"]
 
-bracket_length=50; // 100;
-screw_style=US5FlatStr; // going to do 3 types of screws
+/* [Edge Style] */
+Front_Style="round"; // ["flat","round","dovetail","screwprofile"]
+Back_Style="flat"; // ["flat", "dovetail", "bracket", "charm"]
+
+/* [Bracket] */
+// Use only if Back Style is set to "bracket"
+Bracket_Length=50; // 100;
+
+/* [Fine Tuning] */
+// Extra Thickness for the slider(mm). For flush mount, use 0
+Extra_Thickness = 1.9;
+// Extra Clearance for the build. Positive for a loose build, negative for tighter
+Extra_Clearance = 0;
+
+/* [Hidden] */
+
+// I wrote most of the code before adding customizer. For a nicer looking UI,
+// customizer uses different variable names from internal ones.
+length=Slider_Length;
+drill_hole_distance=Drill_Hole_Distance;
+screw_style=Screw_Style;
+front_style=Front_Style;
+back_style=Back_Style;
+bracket_length=Bracket_Length;
+extra_thickness=Extra_Thickness;
+extra_clearance=Extra_Clearance;
 
 // Probably going to change below as I add more features
 create_round_front = front_style == "round";
@@ -112,7 +130,7 @@ module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
                     // rest of the holes are offset to the centre hole
                     for(i=[1:num_of_holes_one_side]){
                         pos = i * drill_hole_distance;
-                        if (midpoint + pos < slider_length - 10) {
+                        if (midpoint + pos < slider_length - 5) {
                             translate([0, 0, midpoint - pos]) rotate([-90, 0, 0])
                                 CreateScrew(screw_style,h1,h2); 
                             translate([0, 0, midpoint + pos]) rotate([-90, 0, 0])
@@ -196,7 +214,7 @@ difference(){
         screw_hole_depth = calc_screw_hole_depth();
         
         translate([bottom_width / 2, screw_hole_depth, 0])
-        translate([0, 0, midpoint]) rotate([-90, 0, 0]) 
+            rotate([-90, 0, 0]) 
             CreateScrew(screw_style,h1,h2);
     };
 }
@@ -218,62 +236,3 @@ if (create_charm_back) {
 }
 } // end union    
 
-
-// Below are old code
-    /*        
-    union(){    
-    // manual example
-    color("red"){ // edge  
-        translate([bottom_width/2, screw_hole_depth, 0])  
-        rotate([-90,0,0])    
-        US5WoodScrew(15.875, total_thickness); // 5/8
-    };
-    color("pink"){ // centre 
-    translate([bottom_width/2, screw_hole_depth, length / 2])  
-    rotate([-90,0,0])    
-    US5WoodScrew(15.875, total_thickness); // 5/8
-    };
-    }
-*/
-
-/* old bottom points definition where every points are mashed together
-    bottom_points = [[0,0], 
-       [bottom_width, 0], 
-       [bottom_width, bottom_thickness], 
-       [top_end_x, bottom_thickness],
-       [top_end_x, total_thickness],
-       [top_start_x, total_thickness],
-       [top_start_x, bottom_thickness],
-       [0, bottom_thickness]];
-*/
-/* exercise
-color("red") difference(){
-    bottom_points = [[0,0], [0, bottom_thickness], 
-       [bottom_width, bottom_thickness],[bottom_width, 0]];
-    linear_extrude(length)
-           polygon(bottom_points);
-    prism_chamfer_mask(bottom_points,
-        start_edge=0, end_edge=1, height=0);
-}
-*/
-
-/*
-// overlap between each block
-overlap = 0.1;
-
-//bottom
-color("red")
-    cube([bottom_width, length, bottom_thickness], center = false);
-
-// top
-x_offset = (top_width - bottom_width) / 2;
-translate([- x_offset, 0, bottom_thickness - overlap]) {
-    color("green")
-        cube([top_width, length, top_thickness], center = false);
-};
-
-// Extra block
-translate([- x_offset, 0, bottom_thickness + top_thickness - overlap * 2]) {
-    cube([top_width, length, extra_height], center = false);
-};
-*/

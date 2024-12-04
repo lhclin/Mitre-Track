@@ -9,7 +9,7 @@
 US5FlatStr = "US#5 Flat";
 US5FlatHeadHeight = 2.8;    // caliper
 US5FlatHeadDiameter = 6.35; // head bore 1/4
-US5FlatDiameter = 3.18;    // shank hole 1/8
+US5FlatDiameter = 3.18;    // major diameter 1/8
 US5FlatClearance = 0.5;
 
 /* ad hoc measured by caliper
@@ -22,13 +22,13 @@ US5FlatClearance = 0.5;
 US6RoundStr = "US#6 Round";
 US6RoundHeadHeight = 0;
 US6RoundHeadDiameter = 7.14; // head bore 9/32
-US6RoundDiameter = 3.57;     // shank hole 9/64
+US6RoundDiameter = 3.51;     // major dia. 0.138"
 US6RoundClearance = 0.5;
 
 US8FlatStr = "US#8 Flat"; 
 US8FlatHeadHeight = 3.4;
 US8FlatHeadDiameter = 8.73; // head bore 11/32
-US8FlatDiameter = 3.97;     // shank hole 5/32
+US8FlatDiameter = 4.17;     // major dia. 0.164"
 US8FlatClearance = 0.5;
 
 // Utilities
@@ -99,22 +99,6 @@ function ScrewHeadHeight(style) =
       style == US6RoundStr ? US6RoundHeadHeight :
       style == US8FlatStr ? US8FlatHeadHeight : 0;
 
-/*
-    assert(IsScrewSupported(style));
-    
-    if (screw_style == US6RoundStr)
-    {
-        ScrewHeadHeight=US6RoundHeadHeight;
-    } else if (screw_style == US8FlatStr)
-    {
-        ScrewHeadHeight=US8FlatHeadHeight;
-    } else { // Default US#5 Flat
-        ScrewHeadHeight=US5FlatHeadHeight;
-    }
-    // I don't think I need 
-}
-*/
-
 module CreateScrew(
     style="", 
     screw_length=15, 
@@ -126,26 +110,26 @@ module CreateScrew(
         CreateScrewRAW(
             screw_length,
             head_hole_length,
-            US5FlatHeadDiameter,
+            US5FlatHeadDiameter + US5FlatClearance,
             US5FlatHeadHeight,
-            US5FlatDiameter
+            US5FlatDiameter + US5FlatClearance
         );
     }
     else if (style==US6RoundStr) {
         CreateScrewRAW(
             screw_length,
             head_hole_length,
-            US6RoundHeadDiameter,
+            US6RoundHeadDiameter + US6RoundClearance,
             US6RoundHeadHeight,
-            US6RoundDiameter
+            US6RoundDiameter + US6RoundClearance
         );
     } else if (style == US8FlatStr) {
         CreateScrewRAW(
             screw_length,
             head_hole_length,
-            US8FlatHeadDiameter,
+            US8FlatHeadDiameter + US8FlatClearance,
             US8FlatHeadHeight,
-            US8FlatDiameter
+            US8FlatDiameter + US8FlatClearance
         );
     } else assert(false);
 } // end CreateScrew    

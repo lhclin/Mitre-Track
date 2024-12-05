@@ -1,5 +1,6 @@
 include <ScrewLibrary.scad>
 include <Charm.scad>
+use <TinyDoveTail.scad>
 
 // user customizable
 /* [General] */
@@ -9,18 +10,28 @@ Slider_Length=30; // 200;
 // Less than 20 will disable holes
 Drill_Hole_Distance=45; 
 
-Screw_Style="US#5 Flat"; // ["US#5 Flat","US#6 Round","US#8 Flat"]
+Screw_Style="US#5 Flat"; // ["US#5 Flat","US#6 Flat","US#8 Flat" "US#8 Round","custom"]
+
+/* [Custom Screw Size] */
+// Use when Screw Style is set to "custom"
+Custom_Screw_Head_Height = 0; // Use M3-0.5 socket head as example
+Custom_Screw_Head_Diameter = 5.4;
+Custom_Screw_Diameter = 2.98;
+Custom_Screw_Clearance = 0.5;
 
 /* [Edge Style] */
 Front_Style="round"; // ["flat","round","dovetail","screwprofile"]
-Back_Style="flat"; // ["flat", "dovetail", "bracket", "charm"]
+Back_Style="bracket"; // "flat"; // ["flat", "dovetail", "bracket", "charm"]
 
 /* [Bracket] */
-// Use only if Back Style is set to "bracket"
+// Use when Back Style is set to "bracket"
 Bracket_Length=50; // 100;
+Bracket_Depth=5; // default to same as T30 thickness(top)
+Bracket_Holes=3;
+Bracket_Hole_Style="US#5 Flat"; // ["US#5 Flat","US#6 Flat","US#8 Flat" "US#8 Round","custom"]
 
 /* [Fine Tuning] */
-// Extra Thickness for the slider(mm). For flush mount, use 0
+// Extra Thickness for the slider(mm). For flush slider, use 1.2
 Extra_Thickness = 1.9;
 // Extra Clearance for the build. Positive for a loose build, negative for tighter
 Extra_Clearance = 0;
@@ -31,12 +42,25 @@ Extra_Clearance = 0;
 // customizer uses different variable names from internal ones.
 length=Slider_Length;
 drill_hole_distance=Drill_Hole_Distance;
+
 screw_style=Screw_Style;
+
 front_style=Front_Style;
 back_style=Back_Style;
+
 bracket_length=Bracket_Length;
+bracket_depth=Bracket_Depth;
+bracket_holes=Bracket_Holes;
+bracket_hole_style=Bracket_Hole_Style;
+bracket_hole_margin=10; // not yet customizable
+
 extra_thickness=Extra_Thickness;
 extra_clearance=Extra_Clearance;
+
+custom_screw_head_height = Custom_Screw_Head_Height;
+custom_screw_head_diameter = Custom_Screw_Head_Diameter;
+custom_screw_diameter = Custom_Screw_Diameter;
+custom_screw_clearance = Custom_Screw_Clearance;
 
 // Probably going to change below as I add more features
 create_round_front = front_style == "round";
@@ -70,8 +94,11 @@ top_end_x = top_start_x + top_width;
 
 total_thickness = bottom_thickness + t30_top_thickness + extra_thickness;
     
-function calc_screw_hole_depth() = total_thickness - ScrewHeadHeight(screw_style) - 2; // the extra 2mm provides some strength to support the screw
-    
+// extra 2mm for screw hole depth to provide strength to support the screw
+function calc_screw_hole_depth() = screw_style == "custom" ?
+  total_thickness - custom_screw_head_height - 2 :
+  total_thickness - ScrewHeadHeight(screw_style) - 2;
+
 module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
 {
 
@@ -125,16 +152,27 @@ module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
                 
                     // centre hole
                     translate([0, 0, midpoint]) rotate([-90, 0, 0]) 
-                        CreateScrew(screw_style,h1,h2);
+                        CreateScrew(screw_style,h1,h2,
+                            custom_screw_head_height, custom_screw_head_diameter,
+                            custom_screw_diameter, custom_screw_clearance);
 
                     // rest of the holes are offset to the centre hole
                     for(i=[1:num_of_holes_one_side]){
                         pos = i * drill_hole_distance;
                         if (midpoint + pos < slider_length - 5) {
                             translate([0, 0, midpoint - pos]) rotate([-90, 0, 0])
-                                CreateScrew(screw_style,h1,h2); 
+                                CreateScrew(screw_style,h1,h2,
+                                    custom_screw_head_height,
+                                    custom_screw_head_diameter,
+                                    custom_screw_diameter, 
+                                    custom_screw_clearance);
+                            
                             translate([0, 0, midpoint + pos]) rotate([-90, 0, 0])
-                                CreateScrew(screw_style,h1,h2);
+                                CreateScrew(screw_style,h1,h2,
+                                    custom_screw_head_height,
+                                    custom_screw_head_diameter,
+                                    custom_screw_diameter, 
+                                    custom_screw_clearance);
                         } // end if
                     } // end for
                 } // end union of drilled points     
@@ -151,46 +189,18 @@ module CreateRoundCutter(){
         }
 }
 
-module CreateDoveTail(clearance=0){
-    // based on the T30 top width at around 20mm, 15deg dovetail
-    c = clearance;
-    
-    dove_tan=0.268; // tan(15deg)
-    dove_half_long=5-c;
-    dove_depth=5-2*c;
-    dove_half_short=dove_half_long - dove_tan*dove_depth;
-    
-    // old hard coded profile
-    //dove_profile=[[-5+c,0],[5-c,0],[3.66-c,5-c],[-3.66+c,5-c]];
-    
-    dove_profile=[[-dove_half_long,0],[dove_half_long,0],
-        [dove_half_short,dove_depth],[-dove_half_short, dove_depth]];
-  
-    // test_profile=[[0,0],[10,0],[10,10],[0,10]];
-    
-    difference(){
-        // dovetail body
-        color("magenta")
-        translate([0,0,-2*c])
-            linear_extrude(top_thickness-c)
-                polygon(dove_profile);
-    
-        // cut a slope so model can print without support, 20deg
-        slope_tan= 0.364; //tan(20deg)
-        slope_recess=dove_depth*slope_tan;
-    
-        slope_profile=[[0,0],[dove_depth,0], [0,slope_recess]];
-        color("green")
-        translate([-dove_half_long,0,0])
-            rotate([90,0,90])
-                linear_extrude(dove_half_long*2)
-                    polygon(slope_profile);
-    } // end difference
+module CreateBracket(width=0, depth=0, length=0){
+    translate([0,length/2,depth/2]) //lie flat, center on xy plane
+        rotate([90,0,0]) 
+        cube([width, depth, length], center = true); 
 }
-
+    
 // Main
 // Create the main slider, round the front if needed, create L bracket if needed
 
+// final transformation to lie the slider to suggested print face
+// rotate([90,0,180])
+// the slider = subtract front feature from body, then attach back feature
 union() {
 difference(){
     CreateSliderRaw(length, drill_hole_distance);
@@ -206,7 +216,8 @@ difference(){
         color("cyan")
         translate([bottom_width/2,bottom_thickness,5+2*dove_enlarge])
         rotate([-90,0,0])
-        CreateDoveTail(dove_enlarge); // slightly bigger dovetail female
+        CreateTinyDoveTail(top_thickness,
+            dove_enlarge); // slightly bigger dovetail female
     };
     if (create_screwprofile_front) {
         h1 = 15.875;
@@ -215,7 +226,11 @@ difference(){
         
         translate([bottom_width / 2, screw_hole_depth, 0])
             rotate([-90, 0, 0]) 
-            CreateScrew(screw_style,h1,h2);
+            CreateScrew(screw_style,h1,h2,
+                custom_screw_head_height,
+                custom_screw_head_diameter,
+                custom_screw_diameter, 
+                custom_screw_clearance);
     };
 }
 
@@ -224,10 +239,27 @@ difference(){
 if (create_dovetail_back) {
         translate([bottom_width/2,bottom_thickness,length+5])
         rotate([-90,0,0])
-        CreateDoveTail(0); 
+        CreateTinyDoveTail(top_thickness, 0); 
 };  
 if (create_bracket_back) {
-    // TODO
+    color("lime")
+    // translate([bottom_width/2,0,length]) 
+    {   
+        // bracket body
+        CreateBracket(top_width, bracket_depth, bracket_length);
+        
+        if (bracket_holes > 0)
+        {
+            // bracket holes
+            /* TODO
+            length_for_holes = 
+                bracket_length - total_thickness - 2*brack_hole_margin;
+            hole_distance=bracket_holes > 1 ?
+                bracket_length / (bracket_holes - 1) : 0;
+            */
+        }
+        
+    }
 }
 if (create_charm_back) {
     color("tomato")

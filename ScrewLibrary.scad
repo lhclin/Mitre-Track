@@ -19,17 +19,25 @@ US5FlatDiameter = 3.2;
 US5FlatClearance = 0.5;
 */
 
-US6RoundStr = "US#6 Round";
-US6RoundHeadHeight = 0;
-US6RoundHeadDiameter = 7.14; // head bore 9/32
-US6RoundDiameter = 3.51;     // major dia. 0.138"
-US6RoundClearance = 0.5;
+US6FlatStr = "US#6 Flat";
+US6FlatHeadHeight = 2.8; // A caliper
+US6FlatHeadDiameter = 8.0; // head bore 9/32
+US6FlatDiameter = 3.51;     // major dia. 0.138"
+US6FlatClearance = 0.5;
 
 US8FlatStr = "US#8 Flat"; 
-US8FlatHeadHeight = 3.4;
+US8FlatHeadHeight = 3.6;
 US8FlatHeadDiameter = 8.73; // head bore 11/32
 US8FlatDiameter = 4.17;     // major dia. 0.164"
 US8FlatClearance = 0.5;
+
+US8RoundStr = "US#8 Round"; 
+US8RoundHeadHeight = 1; // keep a slight slope for easy printing
+US8RoundHeadDiameter = 8.73; // head bore 11/32
+US8RoundDiameter = 4.17;     // major dia. 0.164"
+US8RoundClearance = 0.5;
+
+CustomScrewStr = "custom";
 
 // Utilities
 module CreateScrewHole(height=15,diameter=3.3) {
@@ -78,12 +86,12 @@ module CreateScrewRAW(
     screw_diameter)
 {
     // the parameters should be already adjusted by clearance    
-    union(){
+    union(){        
         CreateHeadHole(head_diameter, head_hole_length);
-        if (flat_head_height > 0) {
-            CreateFlatHead(head_diameter, 
+  
+        CreateFlatHead(head_diameter, 
                 screw_diameter, flat_head_height);
-        }
+        
         CreateScrewHole(screw_length, screw_diameter);
     }
 }        
@@ -91,19 +99,26 @@ module CreateScrewRAW(
 // Public interface
 function IsScrewSupported(style) =
     style == US5FlatStr ||
-    style == US6RoundStr ||
-    style == US8FlatStr;
+    style == US6FlatStr ||
+    style == US8FlatStr ||
+    style == US8RoundStr ||
+    style == CustomScrewStr;
     
 function ScrewHeadHeight(style) =
     style == US5FlatStr ? US5FlatHeadHeight :
-      style == US6RoundStr ? US6RoundHeadHeight :
-      style == US8FlatStr ? US8FlatHeadHeight : 0;
+      style == US6FlatStr ? US6FlatHeadHeight :
+      style == US8FlatStr ? US8FlatHeadHeight : 
+      style == US8RoundStr ? USRoundHeadHeight : 0;
 
 module CreateScrew(
     style="", 
     screw_length=15, 
-    head_hole_length=0) {
-        
+    head_hole_length=0,
+    custom_screw_head_height=0, // this and below only needed for custom screw size
+    custom_screw_head_diameter=0,
+    custom_screw_diameter=0,
+    custom_screw_clearance=0
+    ) {        
     assert(IsScrewSupported(style));
     
     if (style==US5FlatStr) {
@@ -115,13 +130,13 @@ module CreateScrew(
             US5FlatDiameter + US5FlatClearance
         );
     }
-    else if (style==US6RoundStr) {
+    else if (style==US6FlatStr) {
         CreateScrewRAW(
             screw_length,
             head_hole_length,
-            US6RoundHeadDiameter + US6RoundClearance,
-            US6RoundHeadHeight,
-            US6RoundDiameter + US6RoundClearance
+            US6FlatHeadDiameter + US6FlatClearance,
+            US6FlatHeadHeight,
+            US6FlatDiameter + US6FlatClearance
         );
     } else if (style == US8FlatStr) {
         CreateScrewRAW(
@@ -131,13 +146,30 @@ module CreateScrew(
             US8FlatHeadHeight,
             US8FlatDiameter + US8FlatClearance
         );
+    } else if (style == US8RoundStr) {
+        CreateScrewRAW(
+            screw_length,
+            head_hole_length,
+            US8RoundHeadDiameter + US8RoundClearance,
+            US8RoundHeadHeight,
+            US8RoundDiameter + US8RoundClearance
+        );
+    } else if (style == CustomScrewStr) {
+        CreateScrewRAW(
+            screw_length,
+            head_hole_length,
+            custom_screw_diameter + custom_screw_clearance,
+            custom_screw_head_height,
+            custom_screw_diameter + custom_screw_clearance
+        );
     } else assert(false);
 } // end CreateScrew    
 
 //testing
 // CreateScrew(US5FlatStr, 15, 20);
-// CreateScrew(US6RoundStr, 15, 20);
+// CreateScrew(US6FlatStr, 15, 20);
 // CreateScrew(US8FlatStr, 15, 20);
+// CreateScrew(US8RoundStr, 15, 20);
 // CreateScrew("Unsupported", 15, 20);
          
        

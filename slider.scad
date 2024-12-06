@@ -20,8 +20,8 @@ Custom_Screw_Diameter = 2.98;
 Custom_Screw_Clearance = 0.5;
 
 /* [Edge Style] */
-Front_Style="round"; // ["flat","round","dovetail","screwprofile"]
-Back_Style="bracket"; // "flat"; // ["flat", "dovetail", "bracket", "charm"]
+Front_Style="dovetail"; // ["flat","round","dovetail","screwprofile"]
+Back_Style="dovetail"; // ["flat", "dovetail", "bracket", "charm"]
 
 /* [Bracket] */
 // Use when Back Style is set to "bracket"
@@ -211,13 +211,16 @@ difference(){
             CreateRoundCutter();
     }
     if (create_dovetail_front) {
-        dove_enlarge=-0.1;
+        // dove_enlarge=-0.1;
+        // dove_enlarge = 0;
         
         color("cyan")
-        translate([bottom_width/2,bottom_thickness,5+2*dove_enlarge])
+        // translate([bottom_width/2,bottom_thickness,5+2*dove_enlarge])
+        translate([bottom_width/2,bottom_thickness,5])
         rotate([-90,0,0])
-        CreateTinyDoveTail(top_thickness,
-            dove_enlarge); // slightly bigger dovetail female
+        
+        // front dovetail is always positive
+        CreateTinyDoveTail(positive=false, thickness=top_thickness);
     };
     if (create_screwprofile_front) {
         h1 = 15.875;
@@ -239,7 +242,7 @@ difference(){
 if (create_dovetail_back) {
         translate([bottom_width/2,bottom_thickness,length+5])
         rotate([-90,0,0])
-        CreateTinyDoveTail(top_thickness, 0); 
+        CreateTinyDoveTail(positive=true,thickness=top_thickness); 
 };  
 if (create_bracket_back) {
     color("lime")

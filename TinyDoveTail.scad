@@ -7,8 +7,8 @@ module CreateTinyDoveTailRAW(
     // based on the T30 top width at around 20mm, 15deg dovetail
     c = clearance;
     
-    dove_half_long=5-c;
-    dove_depth=5-2*c;
+    dove_half_long=5+c;
+    dove_depth=5+2*c;
     dove_half_short=dove_half_long - dove_tan*dove_depth;    
     
     dove_profile=[[-dove_half_long,0],[dove_half_long,0],
@@ -36,7 +36,7 @@ module CreateTinyDoveTailRAW(
 module CreateTinyDoveTail(positive=true, thickness=0)
 {
     // negative dovetail is larger
-    clearance=positive ? 0 : -0.05;
+    clearance=positive ? 0 : 0.05;
 
     // Call the RAW version with default tangent will do
     CreateTinyDoveTailRAW(thickness, clearance);
@@ -47,7 +47,7 @@ module CreateTinyDoveTailSpacingCube(
     // Create a cube space that emcompasses a tinydove.
     // Done by calling the RAW dovetail with 0 tangent (no slope)
 
-    clearance=positive ? 0 : -0.05;
+    clearance=positive ? 0 : 0.05;
     CreateTinyDoveTailRAW(thickness, clearance, 0, 0);
 }
 

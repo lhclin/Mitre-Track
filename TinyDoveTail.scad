@@ -16,9 +16,8 @@ module CreateTinyDoveTailRAW(
      
     difference(){
         // dovetail body
-        translate([0,0,-2*c])
-            linear_extrude(thickness-c)
-                polygon(dove_profile);
+        linear_extrude(thickness+c)
+            polygon(dove_profile);
     
         // cut a slope so model can print without support, 20deg
         slope_recess=dove_depth*slope_tan;
@@ -37,6 +36,7 @@ module CreateTinyDoveTail(positive=true, thickness=0)
 {
     // negative dovetail is larger
     clearance=positive ? 0 : 0.05;
+    // clearance=5;
 
     // Call the RAW version with default tangent will do
     CreateTinyDoveTailRAW(thickness, clearance);
@@ -48,7 +48,8 @@ module CreateTinyDoveTailSpacingCube(
     // Done by calling the RAW dovetail with 0 tangent (no slope)
 
     clearance=positive ? 0 : 0.05;
+
     CreateTinyDoveTailRAW(thickness, clearance, 0, 0);
 }
 
-// CreateTinyDoveTail(false, 10);
+// CreateTinyDoveTail(false, 30);

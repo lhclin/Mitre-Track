@@ -10,7 +10,7 @@ Slider_Length=30; // 200;
 // Less than 20 will disable holes
 Drill_Hole_Distance=45; 
 
-Screw_Style="US#5 Flat"; // ["US#5 Flat","US#6 Flat","US#8 Flat" "US#8 Round","custom"]
+Screw_Style="US#5 Flat"; // ["US#5 Flat","US#6 Flat","US#8 Flat","US#8 Round","custom"]
 
 /* [Custom Screw Size] */
 // Use when Screw Style is set to "custom"
@@ -28,7 +28,7 @@ Back_Style="dovetail"; // ["flat", "dovetail", "bracket", "charm"]
 Bracket_Length=50; // 100;
 Bracket_Depth=5; // default to same as T30 thickness(top)
 Bracket_Holes=3;
-Bracket_Hole_Style="US#5 Flat"; // ["US#5 Flat","US#6 Flat","US#8 Flat" "US#8 Round","custom"]
+Bracket_Hole_Style="US#5 Flat"; // ["US#5 Flat","US#6 Flat","US#8 Flat","US#8 Round","custom"]
 
 /* [Fine Tuning] */
 // Extra Thickness for the slider(mm). For flush slider, use 1.2

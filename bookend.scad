@@ -14,6 +14,10 @@ Bookend_Depth=10;
 
 Dovetail_Style = "Both Sides"; // ["One Side Positive", "One Side Negative", "Both Sides"] 
 
+/* [Misc Options] */
+// Set to >0 to make a hole
+Circle_Hole_Diameter=0;
+
 /* [Track Cover Dimension] */
 Track_Length=30; // 240
 
@@ -31,7 +35,9 @@ has_positive_connectors=Dovetail_Style == "Both Sides" ||
                         Dovetail_Style == "One Side Positive";
 has_negative_connectors=Dovetail_Style == "Both Sides" ||
                         Dovetail_Style == "One Side Negative";
-                        
+             
+circle_hole_diameter=Circle_Hole_Diameter;
+
 track_length=Track_Length;
 cover_clearance=0.5; // 0.5mm per side
                             
@@ -91,12 +97,18 @@ union()
         translate([width-round_corner,height-round_corner,0])
             cylinder(h=depth, r=round_corner, center=false);
     }
+        if (circle_hole_diameter > 0) {
+            r=circle_hole_diameter/2;
+            // depth/2 make sure the hole goes thru
+            translate([width/2,height-r*1.25,depth/2])
+            cylinder(depth*2,r,r,center=true);
+        }
+   
         if (has_negative_connectors) {
-            union() {
                 create_negative_connector(position=connector1_pos);
                 create_negative_connector(position=connector2_pos);
-            }
         }
+ 
     } // difference
     
     if (has_positive_connectors) {
@@ -107,7 +119,7 @@ union()
 } // end if
 
 if (will_generate_cover) {
-    // difference()
+    difference()
     {
         // cover body
         cube([width, track_length, 15], center = false);

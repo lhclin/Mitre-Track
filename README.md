@@ -29,3 +29,5 @@ Bracket is for creating a bracket at the end of the slider.
 Number of drilled holes are always odd so there will always be a centre hole. Holes too closed to the edge of sliders are culled.
 
 I am making the slider print without support, but there is no guarantee.
+
+Food container dimension (70x70 bookend, 43 hole)

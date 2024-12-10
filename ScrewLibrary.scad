@@ -108,7 +108,7 @@ function ScrewHeadHeight(style) =
     style == US5FlatStr ? US5FlatHeadHeight :
       style == US6FlatStr ? US6FlatHeadHeight :
       style == US8FlatStr ? US8FlatHeadHeight : 
-      style == US8RoundStr ? USRoundHeadHeight : 0;
+      style == US8RoundStr ? US8RoundHeadHeight : 0;
 
 module CreateScrew(
     style="", 

@@ -1,4 +1,5 @@
 use <TinyDoveTail.scad>
+use <gridfinity-rebuilt-baseplate.scad>
 
 // adjustable parameters
 /* [To Generate] */
@@ -6,20 +7,17 @@ Generate="Bookend"; // ["Bookend","Track Cover"]
 
 /* [Bookend Dimension] */
 // Width Minimum is 40mm
-Bookend_Width=120;
+Bookend_Width=126;
 // Height Minimum is 20mm
-Bookend_Height=100;
+Bookend_Height=105;
 // Depth Minimum is 10mm
-Bookend_Depth=10;
+Bookend_Depth=14;
 
 Dovetail_Style = "Both Sides"; // ["One Side Positive", "One Side Negative", "Both Sides"] 
 
-/* [Misc Options] */
-// Set to >0 to make a hole
-Circle_Hole_Diameter=0;
-
 /* [Track Cover Dimension] */
-Track_Length=30; // 240
+Track_Length=168; // 42
+Cover_Style="Flat"; // ["Flat","Gridfinity"]
 
 /* [Hidden] */
 
@@ -31,15 +29,22 @@ round_corner=5;
 will_generate_bookend=Generate=="Bookend";
 will_generate_cover=Generate=="Track Cover";
 
+// DEBUG
+// will_generate_bookend=false;
+// will_generate_cover=true;
+
 has_positive_connectors=Dovetail_Style == "Both Sides" ||
                         Dovetail_Style == "One Side Positive";
 has_negative_connectors=Dovetail_Style == "Both Sides" ||
                         Dovetail_Style == "One Side Negative";
              
-circle_hole_diameter=Circle_Hole_Diameter;
+circle_hole_diameter=0; // obsolete
 
 track_length=Track_Length;
+cover_depth=14;
 cover_clearance=0.5; // 0.5mm per side
+gridfinity_cover=Cover_Style=="Gridfinity";
+// DEBUG gridfinity_cover=true;
                             
 connector_offset=20;
 connector1_pos=connector_offset;
@@ -122,7 +127,7 @@ if (will_generate_cover) {
     difference()
     {
         // cover body
-        cube([width, track_length, 15], center = false);
+        cube([width, track_length, cover_depth], center = false);
         
         cover_width=t30_bottom_width+cover_clearance*2;
     
@@ -141,4 +146,93 @@ if (will_generate_cover) {
             track_length, 
             total_thickness+cover_clearance], center = false);
     }
+    // Optional gridfinity base 
+    if (gridfinity_cover){
+        create_gridfinity_cover();
+    }
+}
+
+module gridfinity1x1basechunk()
+{
+    $fa = 8;
+    $fs = 0.25;
+    
+    length=42;
+    distancex=0;
+    distancey=0;
+    style_plate=0;
+    enable_magnet=false;
+    style_hole=0;
+    
+    hull()
+    gridfinityBaseplate(1,1,length,
+        distancex,distancey,
+        style_plate,style_hole);
+}
+
+module gridfinity_fill_corner(corner=0){
+    dx=(corner==0)||(corner==3)?4:-4;
+    dy=(corner==0)||(corner==1)?4:-4;
+    
+    translate([-dx,-dy,0]) // translate the corner to origin
+    intersection()
+    {
+       // to show only the specified corner
+       translate([dx,dy,0])
+            cube([8,8,20],center=true);
+    
+       // All 4 corners are created below
+       difference() 
+       {
+         // cube that encompasses the base
+         intersection()
+         { 
+            scale([1.5,1.5,1])
+            gridfinity1x1basechunk();
+            cube([8,8,20],center=true);
+         }
+         // subtracting the round corners
+         // from encompassing cube
+         cylinder(20,r=4,center=true);
+       } // differnce
+    }// intersection
+}
+
+module create_gridfinity_cover() 
+{
+    $fa = 8;
+    $fs = 0.25;
+
+    length=42;
+    distancex=width; //0;
+    distancey=track_length; //0;
+    style_plate=0;
+    enable_magnet=false;
+    style_hole=0;
+    
+    gridx=floor(width/length);
+    gridy=floor(track_length/length);
+
+    translate([distancex/2,distancey/2,cover_depth])
+    {
+      // create a gridfinity base
+      gridfinityBaseplate(gridx,gridy,
+          length,distancex,distancey,
+          style_plate,style_hole);
+      // gridfinity corner is round. Make
+      // fillings to sharpen the corder to
+      // match the look of the cover
+        
+      // The corner filling has the corner at
+      // origin, so translate them to the cover's
+      // cover
+      translate([distancex/2,distancey/2,0])
+         gridfinity_fill_corner(0);
+      translate([-distancex/2,distancey/2,0])
+         gridfinity_fill_corner(1);
+      translate([-distancex/2,-distancey/2,0])
+         gridfinity_fill_corner(2);
+      translate([distancex/2,-distancey/2,0])
+         gridfinity_fill_corner(3);
+    }   
 }

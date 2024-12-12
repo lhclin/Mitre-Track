@@ -31,3 +31,4 @@ Number of drilled holes are always odd so there will always be a centre hole. Ho
 I am making the slider print without support, but there is no guarantee.
 
 Food container dimension (70x70 bookend, 43 hole)
+gridfinity rebuilt library by kennetek (https://github.com/kennetek/gridfinity-rebuilt-openscad)

@@ -5,7 +5,7 @@ use <TinyDoveTail.scad>
 // user customizable
 /* [General] */
 
-Slider_Length=30; // 200;
+Slider_Length=200; // 200;
 
 // Less than 20 will disable holes
 Drill_Hole_Distance=45; 
@@ -27,7 +27,8 @@ Back_Style="dovetail"; // ["flat", "dovetail", "bracket", "charm"]
 // Use when Back Style is set to "bracket"
 Bracket_Length=50; // 100;
 Bracket_Depth=5; // default to same as T30 thickness(top)
-Bracket_Holes=3;
+// Minimum # of Bracket Holes is 2
+Bracket_Holes=2;
 Bracket_Hole_Style="US#5 Flat"; // ["US#5 Flat","US#6 Flat","US#8 Flat","US#8 Round","custom"]
 
 /* [Fine Tuning] */
@@ -59,6 +60,7 @@ extra_clearance=Extra_Clearance;
 
 custom_screw_head_height = Custom_Screw_Head_Height;
 custom_screw_head_diameter = Custom_Screw_Head_Diameter;
+custom_screw_head_straight = true;
 custom_screw_diameter = Custom_Screw_Diameter;
 custom_screw_clearance = Custom_Screw_Clearance;
 
@@ -136,8 +138,8 @@ module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
             if (num_of_holes % 2 == 0) {num_of_holes = num_of_holes - 1;}
 
             num_of_holes_one_side = floor(num_of_holes / 2);
-            h1 = 15; // screw length, this will be deep enough
-            h2 = total_thickness;
+            h2 = 15; // screw length, this will be deep enough
+            h1 = total_thickness;
 
             // translate all holes to middle of slider and desired depth
             translate([bottom_width / 2, screw_hole_depth, 0])
@@ -152,27 +154,55 @@ module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
                 
                     // centre hole
                     translate([0, 0, midpoint]) rotate([-90, 0, 0]) 
+                    /*
                         CreateScrew(screw_style,h1,h2,
                             custom_screw_head_height, custom_screw_head_diameter,
                             custom_screw_diameter, custom_screw_clearance);
+                    */
+                    
+                        CreateScrew(
+                          screw_style, h1, h2,
+                          head_diameter=custom_screw_head_diameter,
+                          head_height=custom_screw_head_height,
+                          head_straight=custom_screw_head_straight,
+                          body_diameter=custom_screw_diameter,
+                          screw_clearance=custom_screw_clearance);
 
                     // rest of the holes are offset to the centre hole
                     for(i=[1:num_of_holes_one_side]){
                         pos = i * drill_hole_distance;
                         if (midpoint + pos < slider_length - 5) {
                             translate([0, 0, midpoint - pos]) rotate([-90, 0, 0])
+                            /*
                                 CreateScrew(screw_style,h1,h2,
                                     custom_screw_head_height,
                                     custom_screw_head_diameter,
                                     custom_screw_diameter, 
                                     custom_screw_clearance);
+                            */
+                            CreateScrew(
+                              screw_style, h1, h2,
+                                head_diameter=                               custom_screw_head_diameter,
+                                head_height=                               custom_screw_head_height,
+                                head_straight=                               custom_screw_head_straight,
+                                body_diameter=                               custom_screw_diameter,
+                                screw_clearance=                               custom_screw_clearance);
                             
                             translate([0, 0, midpoint + pos]) rotate([-90, 0, 0])
+                            /*
                                 CreateScrew(screw_style,h1,h2,
                                     custom_screw_head_height,
                                     custom_screw_head_diameter,
                                     custom_screw_diameter, 
                                     custom_screw_clearance);
+                            */
+                            CreateScrew(
+                              screw_style, h1, h2,
+                                head_diameter=                               custom_screw_head_diameter,
+                                head_height=                               custom_screw_head_height,
+                                head_straight=                               custom_screw_head_straight,
+                                body_diameter=                               custom_screw_diameter,
+                                screw_clearance=                               custom_screw_clearance);
                         } // end if
                     } // end for
                 } // end union of drilled points     
@@ -199,7 +229,7 @@ module CreateBracket(width=0, depth=0, length=0){
 // Create the main slider, round the front if needed, create L bracket if needed
 
 // final transformation to lie the slider to suggested print face
-// rotate([90,0,180])
+rotate([90,0,180])
 // the slider = subtract front feature from body, then attach back feature
 union() {
 difference(){
@@ -223,17 +253,27 @@ difference(){
         CreateTinyDoveTail(positive=false, thickness=top_thickness);
     };
     if (create_screwprofile_front) {
-        h1 = 15.875;
-        h2 = total_thickness;
+        h2 = 15.875;
+        h1 = total_thickness;
         screw_hole_depth = calc_screw_hole_depth();
         
         translate([bottom_width / 2, screw_hole_depth, 0])
             rotate([-90, 0, 0]) 
+        
+            CreateScrew(
+                              screw_style, h1, h2,
+                                head_diameter=                               custom_screw_head_diameter,
+                                head_height=                               custom_screw_head_height,
+                                head_straight=                               custom_screw_head_straight,
+                                body_diameter=                               custom_screw_diameter,
+                                screw_clearance=                               custom_screw_clearance);
+        /*
             CreateScrew(screw_style,h1,h2,
                 custom_screw_head_height,
                 custom_screw_head_diameter,
                 custom_screw_diameter, 
                 custom_screw_clearance);
+        */
     };
 }
 
@@ -246,22 +286,41 @@ if (create_dovetail_back) {
 };  
 if (create_bracket_back) {
     color("lime")
-    // translate([bottom_width/2,0,length]) 
+    translate([bottom_width/2,0,length+bracket_depth]) 
+    rotate([0,180,0])
     {   
-        // bracket body
+        // bracket body - screw holes
+        difference() 
+        {
         CreateBracket(top_width, bracket_depth, bracket_length);
-        
-        if (bracket_holes > 0)
+
+        if (bracket_holes > 1)
         {
             // bracket holes
-            /* TODO
-            length_for_holes = 
-                bracket_length - total_thickness - 2*brack_hole_margin;
-            hole_distance=bracket_holes > 1 ?
-                bracket_length / (bracket_holes - 1) : 0;
-            */
-        }
+            length_for_holes = bracket_length -  
+                total_thickness - 
+                2*bracket_hole_margin;
+            hole_distance=
+                length_for_holes / (bracket_holes - 1);
         
+            h1 = 0; // flush to bracket
+            h2 = 15; // screw length, this will be deep enough
+            
+            for (i=[1:bracket_holes])
+            {   
+                hole_y=total_thickness + bracket_hole_margin +
+                    (i-1)*hole_distance;  
+                translate([0,hole_y,0])
+                CreateScrew(
+                    screw_style, h1, h2,
+                    head_diameter=custom_screw_head_diameter,
+                    head_height=custom_screw_head_height,
+                    head_straight=custom_screw_head_straight,
+                    body_diameter=custom_screw_diameter,
+                    screw_clearance=custom_screw_clearance);         
+            } // end for
+        } // end if bracket_holes > 0
+    }// difference   
     }
 }
 if (create_charm_back) {

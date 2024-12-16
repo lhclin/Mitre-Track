@@ -11,7 +11,7 @@ Bookend_Width=126;
 // Height Minimum is 20mm
 Bookend_Height=105;
 // Depth Minimum is 10mm
-Bookend_Depth=14;
+Bookend_Depth=10; // 14mm looks too thick
 
 Dovetail_Style = "Both Sides"; // ["One Side Positive", "One Side Negative", "Both Sides"] 
 
@@ -41,7 +41,7 @@ has_negative_connectors=Dovetail_Style == "Both Sides" ||
 circle_hole_diameter=0; // obsolete
 
 track_length=Track_Length;
-cover_depth=14;
+cover_depth=15;
 cover_clearance=0.5; // 0.5mm per side
 gridfinity_cover=Cover_Style=="Gridfinity";
 // DEBUG gridfinity_cover=true;

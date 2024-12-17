@@ -10,7 +10,7 @@ Slider_Length=200; // 200;
 // Less than 20 will disable holes
 Drill_Hole_Distance=45; 
 
-Screw_Style="US#5 Flat"; // ["US#5 Flat","US#6 Flat","US#8 Flat","US#8 Round","custom"]
+Screw_Style="US#5 Flat"; // ["US#5 Flat","US#6 Flat","US#8 Flat","US#8 Round","M3 Nut","Pencil Marker","custom"]
 
 /* [Custom Screw Size] */
 // Use when Screw Style is set to "custom"
@@ -21,7 +21,7 @@ Custom_Screw_Clearance = 0.5;
 
 /* [Edge Style] */
 Front_Style="dovetail"; // ["flat","round","dovetail","screwprofile"]
-Back_Style="dovetail"; // ["flat", "dovetail", "bracket", "charm"]
+Back_Style="dovetail"; // ["flat", "dovetail", "bracket", "bracket ring", "charm"]
 
 /* [Bracket] */
 // Use when Back Style is set to "bracket"
@@ -69,6 +69,7 @@ create_round_front = front_style == "round";
 create_dovetail_front = front_style == "dovetail";
 create_dovetail_back = back_style == "dovetail";
 create_bracket_back = back_style == "bracket";
+create_bracket_ring_back = back_style == "bracket ring";
 create_screwprofile_front = front_style == "screwprofile";
 create_charm_back = back_style == "charm";
 
@@ -284,6 +285,20 @@ if (create_dovetail_back) {
         rotate([-90,0,0])
         CreateTinyDoveTail(positive=true,thickness=top_thickness); 
 };  
+if (create_bracket_ring_back) {
+    
+    translate([bottom_width/2,0,length+bracket_depth])
+    rotate([0,180,0])
+    difference()
+    {
+        translate([0,bracket_depth*2,bracket_depth*0.5])
+        color("pink")
+        cube([bottom_width,bracket_depth*4,bracket_depth*2], center=true);
+        color("lime")
+        scale([1.05,1.05,1])
+        CreateBracket(top_width, bracket_depth, bracket_length);
+    }
+}
 if (create_bracket_back) {
     color("lime")
     translate([bottom_width/2,0,length+bracket_depth]) 

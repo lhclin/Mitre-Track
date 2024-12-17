@@ -55,10 +55,10 @@ M3NutClearance = 0.6;
 
 PencilMarkerStr = "Pencil Marker";
 PencilMarkerHeadHeight = 3;
-PencilMarkerHeadDiameter = 2;
+PencilMarkerHeadDiameter = 4;
 PencilMarkerHeadStraight = false;
 PencilMarkerHeadHex = false;
-PencilMarkerDiameter = 8;
+PencilMarkerDiameter = 10;
 PencilMarkerClearance = 0;
 
 CustomScrewStr = "custom";

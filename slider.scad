@@ -64,6 +64,10 @@ custom_screw_head_straight = true;
 custom_screw_diameter = Custom_Screw_Diameter;
 custom_screw_clearance = Custom_Screw_Clearance;
 
+// slightly reduce the length at the bottom of slider to
+// compensate for the extra pastic
+bottom_joint_compensation = 0.2;
+
 // Probably going to change below as I add more features
 create_round_front = front_style == "round";
 create_dovetail_front = front_style == "dovetail";
@@ -86,8 +90,15 @@ tight_clearance = 0.2 + extra_clearance; // for tighter fitting area
 loose_clearance = 0.5 + extra_clearance; // for looser fitting area
 
 // Adjust dimension based on the specified clearance
-bottom_thickness = t30_bottom_thickness - tight_clearance;
-bottom_width = t30_bottom_width - tight_clearance;
+// V1.0 last minute change: fixed the bottom_thickness as other
+// projects rely on this thickness. Loosen up on the width
+// because field test shows the original design is too tight on
+// some print variations
+// earlier code:
+//bottom_thickness = t30_bottom_thickness - tight_clearance;
+// bottom_width = t30_bottom_width - tight_clearance;
+bottom_thickness = t30_bottom_thickness - 0.2;
+bottom_width = t30_bottom_width - loose_clearance;
 
 top_thickness = t30_top_thickness+extra_thickness;
 top_width = t30_top_width - loose_clearance;
@@ -125,11 +136,25 @@ module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
         // subtracting the drilled holes
         
         // first the top and bottom blocks
+        union() {
+            // if the slider is intended to be jointed, do
+            // a length compensation for the extra pastic in print
+            bl = create_dovetail_back ?
+                slider_length - bottom_joint_compensation :
+                slider_length;
+            linear_extrude(bl)
+                polygon(bottom_points);
+            linear_extrude(slider_length)
+                translate([top_start_x,bottom_thickness])
+                    polygon(top_points);
+        }
+        /*
         linear_extrude(slider_length)
             union(){
                 polygon(bottom_points);
                 translate([top_start_x,bottom_thickness]) polygon(top_points);
             };
+        */
 
         // then, subtracting the screw holes from the slider body
         // avoid holes too close together
@@ -174,13 +199,6 @@ module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
                         pos = i * drill_hole_distance;
                         if (midpoint + pos < slider_length - 5) {
                             translate([0, 0, midpoint - pos]) rotate([-90, 0, 0])
-                            /*
-                                CreateScrew(screw_style,h1,h2,
-                                    custom_screw_head_height,
-                                    custom_screw_head_diameter,
-                                    custom_screw_diameter, 
-                                    custom_screw_clearance);
-                            */
                             CreateScrew(
                               screw_style, h1, h2,
                                 head_diameter=                               custom_screw_head_diameter,
@@ -190,13 +208,6 @@ module CreateSliderRaw(slider_length = 200, drill_hole_distance = 45)
                                 screw_clearance=                               custom_screw_clearance);
                             
                             translate([0, 0, midpoint + pos]) rotate([-90, 0, 0])
-                            /*
-                                CreateScrew(screw_style,h1,h2,
-                                    custom_screw_head_height,
-                                    custom_screw_head_diameter,
-                                    custom_screw_diameter, 
-                                    custom_screw_clearance);
-                            */
                             CreateScrew(
                               screw_style, h1, h2,
                                 head_diameter=                               custom_screw_head_diameter,
@@ -221,19 +232,30 @@ module CreateRoundCutter(){
 }
 
 module CreateBracket(width=0, depth=0, length=0){
-    translate([0,length/2,depth/2]) //lie flat, center on xy plane
+    w=width;
+    d=depth;
+    
+    translate([0,length/2,d/2]) //lie flat, center on xy plane
         rotate([90,0,0]) 
-        cube([width, depth, length], center = true); 
+        cube([w, d, length], center = true); 
 }
     
 // Main
 // Create the main slider, round the front if needed, create L bracket if needed
 
+// Need more work:
 // final transformation to lie the slider to suggested print face
-rotate([90,0,180])
+// note: I want to lay a bracket slider on the side because layering
+// this way should produce a stronger joint between the bracket and
+// the slider. Even though this will require support to print
+// final_rotation= create_bracket_back ? [0,90,0] : [90,0,180];
+
+final_rotation=[90,0,180];
+rotate(final_rotation)
 // the slider = subtract front feature from body, then attach back feature
 union() {
-difference(){
+difference()
+{
     CreateSliderRaw(length, drill_hole_distance);
     
     // generate the front features that are subtracted
@@ -241,13 +263,11 @@ difference(){
         translate([bottom_width /2, 0, bottom_width])
             CreateRoundCutter();
     }
-    if (create_dovetail_front) {
-        // dove_enlarge=-0.1;
-        // dove_enlarge = 0;
-        
+    if (create_dovetail_front) {        
         color("cyan")
-        // translate([bottom_width/2,bottom_thickness,5+2*dove_enlarge])
-        translate([bottom_width/2,bottom_thickness,5])
+        translate([bottom_width/2,
+            total_thickness - TinyDoveTailHeight(false,top_thickness),
+            TinyDoveTailDepth(false)])
         rotate([-90,0,0])
         
         // front dovetail is always positive
@@ -268,35 +288,34 @@ difference(){
                                 head_straight=                               custom_screw_head_straight,
                                 body_diameter=                               custom_screw_diameter,
                                 screw_clearance=                               custom_screw_clearance);
-        /*
-            CreateScrew(screw_style,h1,h2,
-                custom_screw_head_height,
-                custom_screw_head_diameter,
-                custom_screw_diameter, 
-                custom_screw_clearance);
-        */
     };
 }
 
 
 // Generate the back features that are attached    
 if (create_dovetail_back) {
-        translate([bottom_width/2,bottom_thickness,length+5])
+        translate([bottom_width/2,
+            total_thickness - TinyDoveTailHeight(true,top_thickness),
+            length+TinyDoveTailDepth(true)])
         rotate([-90,0,0])
         CreateTinyDoveTail(positive=true,thickness=top_thickness); 
 };  
 if (create_bracket_ring_back) {
+    ring_clearance=0.2; // ad hoc
     
-    translate([bottom_width/2,0,length+bracket_depth])
+    bd=bracket_depth+ring_clearance;
+    tw=top_width+ring_clearance;
+    
+    translate([bottom_width/2,0,length+bd])
     rotate([0,180,0])
     difference()
     {
-        translate([0,bracket_depth*2,bracket_depth*0.5])
+        translate([0,bd*2,bd*0.5])
         color("pink")
-        cube([bottom_width,bracket_depth*4,bracket_depth*2], center=true);
+        cube([bottom_width,bd*4,bd*2], center=true);
         color("lime")
-        scale([1.05,1.05,1])
-        CreateBracket(top_width, bracket_depth, bracket_length);
+        CreateBracket(tw, 
+          bd, bracket_length);
     }
 }
 if (create_bracket_back) {

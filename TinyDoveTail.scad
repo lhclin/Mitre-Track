@@ -1,22 +1,36 @@
+function TinyDoveTailClearance(positive=true) = 
+    positive ? 0 : 0.05; // negative dovetail is larger
+
+function TinyDoveTailDepth(positive=true) = 
+    5 + 2 * TinyDoveTailClearance(positive);
+    
+function TinyDoveTailHalfLength(positive=true) =
+    5 + TinyDoveTailClearance(positive);
+    
+function TinyDoveTailHeight(positive=true, thickness =0) =
+    thickness + 4*TinyDoveTailClearance(positive);
+    
 module CreateTinyDoveTailRAW(
-    thickness=0, clearance=0,
+    positive=true,
+    thickness=0, 
     dove_tan=0.268, // tan (15deg) 
     slope_tan=0.364 // tan (20deg)
     )
-{
-    // based on the T30 top width at around 20mm, 15deg dovetail
-    c = clearance;
-    
-    dove_half_long=5+c;
-    dove_depth=5+2*c;
-    dove_half_short=dove_half_long - dove_tan*dove_depth;    
+{    
+    dove_half_long=TinyDoveTailHalfLength(positive);
+    dove_depth=TinyDoveTailDepth(positive);
+    dove_half_short=dove_half_long - dove_tan*dove_depth;   
+   
+    dove_height=TinyDoveTailHeight(positive,thickness);
     
     dove_profile=[[-dove_half_long,0],[dove_half_long,0],
         [dove_half_short,dove_depth],[-dove_half_short, dove_depth]];
      
-    difference(){
+    difference()
+    {
         // dovetail body
-        linear_extrude(thickness+c)
+        // debug : linear_extrude(thickness+c)
+        linear_extrude(dove_height)
             polygon(dove_profile);
     
         // cut a slope so model can print without support, 20deg
@@ -34,22 +48,17 @@ module CreateTinyDoveTailRAW(
 // Public
 module CreateTinyDoveTail(positive=true, thickness=0)
 {
-    // negative dovetail is larger
-    clearance=positive ? 0 : 0.05;
-    // clearance=5;
-
     // Call the RAW version with default tangent will do
-    CreateTinyDoveTailRAW(thickness, clearance);
+    CreateTinyDoveTailRAW(positive, thickness);
 }
 
 module CreateTinyDoveTailSpacingCube(
     positive=true,thickness){
     // Create a cube space that emcompasses a tinydove.
     // Done by calling the RAW dovetail with 0 tangent (no slope)
-
-    clearance=positive ? 0 : 0.05;
-
-    CreateTinyDoveTailRAW(thickness, clearance, 0, 0);
+    CreateTinyDoveTailRAW(positive,thickness, 0, 0);
 }
 
-// CreateTinyDoveTail(false, 30);
+CreateTinyDoveTailRAW(true, thickness=5);
+color("cyan")
+CreateTinyDoveTailRAW(false, thickness=5);
